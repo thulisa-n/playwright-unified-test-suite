@@ -26,6 +26,15 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'], baseURL: 'https://www.saucedemo.com' },
     },
     {
+      name: 'visual',
+      testMatch: /tests\/visual\/.*\.spec\.ts/,
+      use: {
+        ...devices['Desktop Chrome'],
+        baseURL: 'https://www.saucedemo.com',
+        viewport: { width: 1280, height: 720 },
+      },
+    },
+    {
       name: 'api',
       testMatch: /tests\/api\/.*\.spec\.ts/,
       use: { baseURL: `http://localhost:${MOCK_API_PORT}` },
