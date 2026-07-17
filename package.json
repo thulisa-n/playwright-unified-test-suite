@@ -1,0 +1,21 @@
+{
+  "name": "playwright-project-pack",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Production-ready Playwright framework with 103 tests (88 UI + 15 API).",
+  "scripts": {
+    "test": "playwright test",
+    "test:ui": "playwright test --project=ui",
+    "test:api": "playwright test --project=api",
+    "test:headed": "playwright test --headed --workers=1",
+    "test:debug": "cross-env PWDEBUG=1 playwright test --workers=1",
+    "mock-api": "node mock-api/server.mjs",
+    "report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.59.1",
+    "@types/node": "^20.11.0",
+    "cross-env": "^7.0.3",
+    "typescript": "^5.4.0"
+  }
+}
