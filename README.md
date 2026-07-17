@@ -1,29 +1,103 @@
-# Playwright Project Pack
+# Playwright Test Framework: SauceDemo + Mock API
 
-A production-ready TypeScript Playwright framework with **103 tests (88 UI + 15 API)**.
+A portfolio-grade end-to-end and API test framework built with Playwright and
+TypeScript. It covers a full e-commerce flow against SauceDemo plus a bundled
+mock API, and runs in GitHub Actions CI.
 
-The UI tests run against the public practice site saucedemo.com. The 15 API tests
-run against a bundled, zero-dependency mock API that Playwright starts for you, so
-they pass deterministically offline.
+## What it is
 
-## Quick start
+This project demonstrates how I design and maintain automated test frameworks:
+readable page objects, web-first assertions, custom fixtures, external test
+data, visual regression checks, and deterministic API testing.
 
-    npm install
-    npx playwright install --with-deps
-    npm test
+## Test coverage
 
-## Useful commands
+- UI tests: 88
+  - Login: 14
+  - Products: 24
+  - Cart: 23
+  - Checkout: 27
+- API tests: 15 (bundled zero-dependency Node mock API on port 3100)
+- Visual tests: 2 (login and inventory baselines with masking)
+- Total: 105
 
-- `npm run test:ui` runs the 88 UI tests.
-- `npm run test:api` runs the 15 API tests (the mock API auto-starts).
-- `npm run test:headed` runs with a visible browser.
-- `npm run report` opens the last HTML report.
+## Tech stack
 
-## Layout
+- Playwright + TypeScript
+- Page Object Model (`LoginPage`, `InventoryPage`, `ProductDetailPage`, `CartPage`, `CheckoutPage`)
+- Custom fixtures and external test data files
+- Bundled Node mock API started automatically via Playwright `webServer`
+- GitHub Actions CI on Node 20
 
-- `page-objects/` Page Object Model classes (getByTestId / getByRole).
-- `tests/ui/` UI suites: login, products, cart, checkout.
-- `tests/api/` API suite against the bundled mock.
-- `mock-api/server.mjs` the bundled mock REST API.
-- `data/` external test data.
-- `fixtures/` custom Playwright fixtures.
+## Prerequisites
+
+- Node.js 20+
+- npm
+
+## How to run
+
+```bash
+npm install
+npx playwright install --with-deps
+npm test
+```
+
+Open the HTML report after a run:
+
+```bash
+npm run report
+```
+
+## Visual regression workflow
+
+Run visual tests:
+
+```bash
+npm run test:visual
+```
+
+Create or intentionally refresh snapshots:
+
+```bash
+npm run test:visual:update
+```
+
+For CI-stable Linux baselines, generate snapshots in the Playwright Docker image:
+
+```bash
+docker run --rm -v "$(pwd):/work" -w /work \
+  mcr.microsoft.com/playwright:v1.59.1-noble \
+  npx playwright test --project=visual --update-snapshots
+```
+
+Snapshots are stored next to the spec in:
+- `tests/visual/visual.spec.ts-snapshots/`
+
+## CI
+
+GitHub Actions runs the full suite on pushes and pull requests:
+
+- checkout
+- setup-node (Node 20)
+- `npm ci`
+- `npx playwright install --with-deps`
+- test run
+- HTML report upload as an artifact
+
+## Project structure
+
+- `page-objects/` - reusable page object classes
+- `fixtures/` - custom Playwright fixtures
+- `tests/ui/` - UI functional test suites
+- `tests/api/` - API suite against the bundled mock server
+- `tests/visual/visual.spec.ts` - visual regression spec
+- `mock-api/server.mjs` - local mock REST API
+- `data/` - external test data
+
+## Notes and tradeoffs
+
+- UI tests run against a public demo app, so visual tests rely on controlled
+  baselines, masking, and a small tolerance.
+- Linux-generated snapshots are the source of truth for CI.
+- This framework prioritizes clarity, maintainability, and interview/demo value
+  over production-scale complexity.
