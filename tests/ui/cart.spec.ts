@@ -1,9 +1,7 @@
-import { test, expect } from '@playwright/test'
-import { LoginPage } from '../../page-objects/LoginPage'
+import { test, expect } from '../../fixtures/test-fixtures'
 import { InventoryPage } from '../../page-objects/InventoryPage'
 import { ProductDetailPage } from '../../page-objects/ProductDetailPage'
 import { CartPage } from '../../page-objects/CartPage'
-import { USERS, PASSWORD } from '../../data/users'
 
 const ALL_PRODUCTS = [
   'Sauce Labs Backpack',
@@ -15,54 +13,56 @@ const ALL_PRODUCTS = [
 ]
 
 test.describe('Cart', () => {
-  let inventory: InventoryPage
-  let cart: CartPage
-
-  test.beforeEach(async ({ page }) => {
-    const login = new LoginPage(page)
-    await login.goto()
-    await login.login(USERS.standard, PASSWORD)
-    inventory = new InventoryPage(page)
-    await inventory.expectLoaded()
-    cart = new CartPage(page)
-  })
+  function pages(loggedInPage: InventoryPage) {
+    return {
+      inventory: loggedInPage,
+      cart: new CartPage(loggedInPage.page),
+    }
+  }
 
   // 1
-  test('cart is empty right after login', async () => {
+  test('cart is empty right after login', async ({ loggedInPage }) => {
+    const { cart } = pages(loggedInPage)
     await cart.goto()
     await cart.expectItemCount(0)
   })
 
   // 2
-  test('continue shopping returns to the inventory page', async ({ page }) => {
+  test('continue shopping returns to the inventory page', async ({ loggedInPage }) => {
+    const { inventory, cart } = pages(loggedInPage)
     await cart.goto()
     await cart.continueShopping()
+    const page = loggedInPage.page
     await expect(page).toHaveURL(/inventory\.html/)
     await expect(inventory.title).toBeVisible()
   })
 
   // 3
-  test('checkout button is visible in the cart', async () => {
+  test('checkout button is visible in the cart', async ({ loggedInPage }) => {
+    const { cart } = pages(loggedInPage)
     await cart.goto()
     await expect(cart.checkoutButton).toBeVisible()
   })
 
   // 4
-  test('add one item then the cart shows 1 item', async () => {
+  test('add one item then the cart shows 1 item', async ({ loggedInPage }) => {
+    const { inventory, cart } = pages(loggedInPage)
     await inventory.addToCartByName('Sauce Labs Backpack')
     await cart.goto()
     await cart.expectItemCount(1)
   })
 
   // 5
-  test('the cart item has the expected name', async () => {
+  test('the cart item has the expected name', async ({ loggedInPage }) => {
+    const { inventory, cart } = pages(loggedInPage)
     await inventory.addToCartByName('Sauce Labs Backpack')
     await cart.goto()
     await expect(cart.items.getByTestId('inventory-item-name')).toHaveText('Sauce Labs Backpack')
   })
 
   // 6
-  test('the cart item shows a price', async () => {
+  test('the cart item shows a price', async ({ loggedInPage }) => {
+    const { inventory, cart } = pages(loggedInPage)
     await inventory.addToCartByName('Sauce Labs Backpack')
     await cart.goto()
     const price = cart.items.getByTestId('inventory-item-price')
@@ -71,14 +71,16 @@ test.describe('Cart', () => {
   })
 
   // 7
-  test('the cart item quantity is 1', async () => {
+  test('the cart item quantity is 1', async ({ loggedInPage }) => {
+    const { inventory, cart } = pages(loggedInPage)
     await inventory.addToCartByName('Sauce Labs Backpack')
     await cart.goto()
     await expect(cart.items.getByTestId('item-quantity')).toHaveText('1')
   })
 
   // 8
-  test('add two items then the cart shows 2 items', async () => {
+  test('add two items then the cart shows 2 items', async ({ loggedInPage }) => {
+    const { inventory, cart } = pages(loggedInPage)
     await inventory.addToCartByName('Sauce Labs Backpack')
     await inventory.addToCartByName('Sauce Labs Bike Light')
     await cart.goto()
@@ -86,7 +88,8 @@ test.describe('Cart', () => {
   })
 
   // 9
-  test('add all six items then the cart shows 6 items', async () => {
+  test('add all six items then the cart shows 6 items', async ({ loggedInPage }) => {
+    const { inventory, cart } = pages(loggedInPage)
     for (const name of ALL_PRODUCTS) {
       await inventory.addToCartByName(name)
     }
@@ -95,7 +98,8 @@ test.describe('Cart', () => {
   })
 
   // 10
-  test('remove the only item empties the cart', async () => {
+  test('remove the only item empties the cart', async ({ loggedInPage }) => {
+    const { inventory, cart } = pages(loggedInPage)
     await inventory.addToCartByName('Sauce Labs Backpack')
     await cart.goto()
     await cart.expectItemCount(1)
@@ -104,7 +108,8 @@ test.describe('Cart', () => {
   })
 
   // 11
-  test('removing one of two items leaves one', async () => {
+  test('removing one of two items leaves one', async ({ loggedInPage }) => {
+    const { inventory, cart } = pages(loggedInPage)
     await inventory.addToCartByName('Sauce Labs Backpack')
     await inventory.addToCartByName('Sauce Labs Bike Light')
     await cart.goto()
@@ -115,7 +120,8 @@ test.describe('Cart', () => {
   })
 
   // 12
-  test('the cart badge equals the number of items added', async () => {
+  test('the cart badge equals the number of items added', async ({ loggedInPage }) => {
+    const { inventory, cart } = pages(loggedInPage)
     await inventory.addToCartByName('Sauce Labs Backpack')
     await inventory.addToCartByName('Sauce Labs Bike Light')
     await inventory.addToCartByName('Sauce Labs Bolt T-Shirt')
@@ -124,15 +130,18 @@ test.describe('Cart', () => {
   })
 
   // 13
-  test('checkout navigates to checkout step one', async ({ page }) => {
+  test('checkout navigates to checkout step one', async ({ loggedInPage }) => {
+    const { inventory, cart } = pages(loggedInPage)
     await inventory.addToCartByName('Sauce Labs Backpack')
     await cart.goto()
     await cart.checkout()
+    const page = loggedInPage.page
     await expect(page).toHaveURL(/checkout-step-one\.html/)
   })
 
   // 14
-  test('an added item persists after continue shopping and reopening the cart', async () => {
+  test('an added item persists after continue shopping and reopening the cart', async ({ loggedInPage }) => {
+    const { inventory, cart } = pages(loggedInPage)
     await inventory.addToCartByName('Sauce Labs Backpack')
     await cart.goto()
     await cart.continueShopping()
@@ -143,7 +152,8 @@ test.describe('Cart', () => {
   })
 
   // 15
-  test('removing an item in the cart updates the badge', async () => {
+  test('removing an item in the cart updates the badge', async ({ loggedInPage }) => {
+    const { inventory, cart } = pages(loggedInPage)
     await inventory.addToCartByName('Sauce Labs Backpack')
     await inventory.addToCartByName('Sauce Labs Bike Light')
     await cart.goto()
@@ -153,7 +163,8 @@ test.describe('Cart', () => {
   })
 
   // 16
-  test('each distinct product appears exactly once in the cart', async () => {
+  test('each distinct product appears exactly once in the cart', async ({ loggedInPage }) => {
+    const { inventory, cart } = pages(loggedInPage)
     for (const name of ALL_PRODUCTS) {
       await inventory.addToCartByName(name)
     }
@@ -164,7 +175,8 @@ test.describe('Cart', () => {
   })
 
   // 17
-  test('the Backpack price in the cart is $29.99', async () => {
+  test('the Backpack price in the cart is $29.99', async ({ loggedInPage }) => {
+    const { inventory, cart } = pages(loggedInPage)
     await inventory.addToCartByName('Sauce Labs Backpack')
     await cart.goto()
     const line = cart.items.filter({ hasText: 'Sauce Labs Backpack' })
@@ -172,21 +184,25 @@ test.describe('Cart', () => {
   })
 
   // 18
-  test('an empty cart has no remove buttons', async () => {
+  test('an empty cart has no remove buttons', async ({ loggedInPage }) => {
+    const { cart } = pages(loggedInPage)
     await cart.goto()
     await cart.expectItemCount(0)
     await expect(cart.page.getByRole('button', { name: /remove/i })).toHaveCount(0)
   })
 
   // 19
-  test('the cart link from inventory opens the cart page', async ({ page }) => {
+  test('the cart link from inventory opens the cart page', async ({ loggedInPage }) => {
+    const { inventory, cart } = pages(loggedInPage)
     await inventory.cartLink.click()
+    const page = loggedInPage.page
     await expect(page).toHaveURL(/cart\.html/)
     await expect(cart.checkoutButton).toBeVisible()
   })
 
   // 20
-  test('the cart shows a quantity for each line', async () => {
+  test('the cart shows a quantity for each line', async ({ loggedInPage }) => {
+    const { inventory, cart } = pages(loggedInPage)
     await inventory.addToCartByName('Sauce Labs Backpack')
     await inventory.addToCartByName('Sauce Labs Bike Light')
     await cart.goto()
@@ -197,9 +213,10 @@ test.describe('Cart', () => {
   })
 
   // 21
-  test('adding from the product detail page then opening the cart shows the item', async ({ page }) => {
+  test('adding from the product detail page then opening the cart shows the item', async ({ loggedInPage }) => {
+    const { inventory, cart } = pages(loggedInPage)
     await inventory.openProductByName('Sauce Labs Backpack')
-    const detail = new ProductDetailPage(page)
+    const detail = new ProductDetailPage(loggedInPage.page)
     await detail.addToCart()
     await cart.goto()
     await cart.expectItemCount(1)
@@ -207,7 +224,8 @@ test.describe('Cart', () => {
   })
 
   // 22
-  test('continue shopping keeps previously added items', async () => {
+  test('continue shopping keeps previously added items', async ({ loggedInPage }) => {
+    const { inventory, cart } = pages(loggedInPage)
     await inventory.addToCartByName('Sauce Labs Backpack')
     await cart.goto()
     await cart.continueShopping()
@@ -218,7 +236,8 @@ test.describe('Cart', () => {
   })
 
   // 23
-  test('removing all items makes the cart badge disappear', async () => {
+  test('removing all items makes the cart badge disappear', async ({ loggedInPage }) => {
+    const { inventory, cart } = pages(loggedInPage)
     await inventory.addToCartByName('Sauce Labs Backpack')
     await inventory.addToCartByName('Sauce Labs Bike Light')
     await cart.goto()
