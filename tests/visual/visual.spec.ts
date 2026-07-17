@@ -1,38 +1,26 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from '../../fixtures/test-fixtures'
 import { LoginPage } from '../../page-objects/LoginPage'
-import { InventoryPage } from '../../page-objects/InventoryPage'
-import { USERS, PASSWORD } from '../../data/users'
 
 test.describe('Visual', () => {
-  let login: LoginPage
-  let inventory: InventoryPage
-
-  test.beforeEach(async ({ page }) => {
-    login = new LoginPage(page)
-    inventory = new InventoryPage(page)
-    await login.goto()
-  })
-
-  // 1
   test('login page matches the visual baseline', async ({ page }) => {
+    const login = new LoginPage(page)
+    await login.goto()
+
     await expect(page).toHaveScreenshot('login-page.png', {
       fullPage: true,
       maxDiffPixelRatio: 0.01,
     })
   })
 
-  // 2
-  test('inventory page matches the visual baseline', async ({ page }) => {
-    await login.login(USERS.standard, PASSWORD)
-    await inventory.expectLoaded()
+  test('inventory page matches the visual baseline', async ({ loggedInPage }) => {
+    const page = loggedInPage.page
 
-    // Keep a visible dynamic element and mask it to avoid false diffs.
-    await inventory.addToCartByName('Sauce Labs Backpack')
-    await inventory.expectCartCount(1)
+    await loggedInPage.addToCartByName('Sauce Labs Backpack')
+    await loggedInPage.expectCartCount(1)
 
     await expect(page).toHaveScreenshot('inventory-page.png', {
       fullPage: true,
-      mask: [inventory.cartBadge],
+      mask: [loggedInPage.cartBadge],
       maxDiffPixelRatio: 0.01,
     })
   })
