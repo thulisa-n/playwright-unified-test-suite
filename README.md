@@ -64,6 +64,16 @@ Create or intentionally refresh snapshots:
 npm run test:visual:update
 ```
 
+Alternative quick filter command:
+
+```bash
+npx playwright test visual --update-snapshots
+```
+
+Use `npm run test:visual:update` by default because it targets the dedicated
+`visual` project explicitly. The quick filter command matches by text/path and
+can be broader.
+
 For CI-stable Linux baselines, generate snapshots in the Playwright Docker image:
 
 ```bash
