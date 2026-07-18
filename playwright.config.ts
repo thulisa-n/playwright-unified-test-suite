@@ -35,6 +35,11 @@ export default defineConfig({
       },
     },
     {
+      name: 'a11y',
+      testMatch: /tests\/a11y\/.*\.spec\.ts/,
+      use: { ...devices['Desktop Chrome'], baseURL: 'https://www.saucedemo.com' },
+    },
+    {
       name: 'api',
       testMatch: /tests\/api\/.*\.spec\.ts/,
       use: { baseURL: `http://localhost:${MOCK_API_PORT}` },
