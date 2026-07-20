@@ -12,21 +12,23 @@ data, visual regression checks, and deterministic API testing.
 
 ## Test coverage
 
-- UI tests: 88
+- UI tests: 92
   - Login: 14
   - Products: 24
   - Cart: 23
   - Checkout: 27
+  - Menu: 4
 - API tests: 15 (bundled zero-dependency Node mock API on port 3100)
 - Visual tests: 2 (login and inventory baselines with masking)
 - Accessibility tests: 3 (login, inventory, checkout)
-- Total: 108
+- Total: 112
 
 ## Tech stack
 
 - Playwright + TypeScript
+- `ajv` for API contract validation
 - `@axe-core/playwright` for accessibility scanning
-- Page Object Model (`LoginPage`, `InventoryPage`, `ProductDetailPage`, `CartPage`, `CheckoutPage`)
+- Page Object Model (`LoginPage`, `InventoryPage`, `ProductDetailPage`, `CartPage`, `CheckoutPage`, `MenuPage`)
 - Custom fixtures and external test data files
 - Bundled Node mock API started automatically via Playwright `webServer`
 - GitHub Actions CI on Node 20
@@ -99,6 +101,21 @@ violations:
 - `tests/a11y/accessibility.spec.ts`
 - pages scanned: login, inventory, checkout
 
+## API contract workflow
+
+Run API tests with contract validation:
+
+```bash
+npm run test:api
+```
+
+The suite uses AJV schemas to validate response shape (not only values):
+
+- `tests/api/api.spec.ts`
+- covers list, single-resource, mutation, and error contracts
+- schemas use `required` and `additionalProperties: false` to catch drift in
+  both directions
+
 ## Framework decisions and tradeoffs
 
 - **Custom fixture for reusable login setup**  
@@ -123,22 +140,37 @@ violations:
   is third-party markup without an accessible name; we cannot change it in this
   repo, so the suppression is narrow and explained in code.
 
+- **API tests validate contracts and behavior**  
+  AJV schema checks fail fast when response shape drifts, while existing value
+  assertions keep endpoint behavior coverage readable and explicit.
+
+- **Cross-browser UI validation uses project-based test runs**  
+  `test:ui` runs chromium/firefox/webkit projects to catch browser-specific
+  regressions early, while visual/a11y/api stay in dedicated projects.
+
 ## CI
 
-GitHub Actions runs the full suite on pushes and pull requests:
+GitHub Actions runs a matrix + shard pipeline on pushes and pull requests:
 
-- checkout
-- setup-node (Node 20)
-- `npm ci`
-- `npx playwright install --with-deps`
-- test run
-- HTML report upload as an artifact
+- Browser matrix job:
+  - projects: `chromium`, `firefox`, `webkit`
+  - shards: `1/2`, `2/2`
+  - `fail-fast: false` so one browser failure does not cancel the rest
+  - each shard uploads a uniquely named blob artifact
+- Merge job:
+  - downloads all blob artifacts
+  - merges into one HTML report (`playwright merge-reports`)
+  - uploads merged browser report artifact
+- Supporting tests job:
+  - runs `visual`, `a11y`, and `api` projects
+  - uploads supporting report artifact
 
 ## Project structure
 
 - `page-objects/` - reusable page object classes
 - `fixtures/` - custom Playwright fixtures
 - `tests/ui/` - UI functional test suites
+- `tests/ui/menu.spec.ts` - hamburger menu suite
 - `tests/api/` - API suite against the bundled mock server
 - `tests/visual/visual.spec.ts` - visual regression spec
 - `tests/a11y/accessibility.spec.ts` - accessibility scan suite

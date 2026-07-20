@@ -5,12 +5,12 @@
   "description": "Production-ready Playwright framework with 103 tests (88 UI + 15 API).",
   "scripts": {
     "test": "playwright test",
-    "test:ui": "playwright test --project=ui",
+    "test:ui": "playwright test --project=chromium --project=firefox --project=webkit",
     "test:a11y": "playwright test --project=a11y",
     "test:visual": "playwright test --project=visual",
     "test:visual:update": "playwright test --project=visual --update-snapshots",
     "test:api": "playwright test --project=api",
-    "test:headed": "playwright test --headed --workers=1",
+    "test:headed": "playwright test --project=chromium --headed --workers=1",
     "test:debug": "cross-env PWDEBUG=1 playwright test --workers=1",
     "mock-api": "node mock-api/server.mjs",
     "report": "playwright show-report"
